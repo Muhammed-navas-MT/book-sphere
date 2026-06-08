@@ -12,6 +12,7 @@ import { updateBookSchema } from "../../validators/updateBookValidator.js";
 import { IUpdateBookService } from "../../interface/services/bookService/updateBookServiceInterface.js";
 import { IDeleteBookService } from "../../interface/services/bookService/deleteBookServiceInterface.js";
 import { IgetBookDetailService } from "../../interface/services/bookService/getBookDetailServiceInterface.js";
+import { ISuggestionService } from "../../interface/services/bookService/suggestionsServiceInterface.js";
 
 export class BookController {
   constructor(
@@ -19,7 +20,8 @@ export class BookController {
     private _listBooksService: IListBooksService,
     private _updateBookService: IUpdateBookService,
     private _deleteBookService: IDeleteBookService,
-    private _getBookDetailService: IgetBookDetailService
+    private _getBookDetailService: IgetBookDetailService,
+    private _suggestionsService: ISuggestionService,
   ) {}
 
   async createBook(
@@ -33,8 +35,6 @@ export class BookController {
         year: Number(req.body.year),
         pages: Number(req.body.pages),
       };
-
-      console.log(data);
 
       const validationResult = createBookSchema.safeParse(data);
 
@@ -70,7 +70,7 @@ export class BookController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      console.log("Navas list books page")
+      console.log("Navas list books page");
       const params: IListBooksQuery = {
         limit: req.query.limit ? Number(req.query.limit) : 10,
         page: req.query.page ? Number(req.query.page) : 1,
@@ -80,7 +80,6 @@ export class BookController {
         year: req.query.year ? Number(req.query.year) : 0,
       };
       const response = await this._listBooksService.execute(params);
-      console.log(response);
       res
         .status(200)
         .json({ data: response, message: "List all Books successfully" });
@@ -95,7 +94,7 @@ export class BookController {
     next: NextFunction,
   ): Promise<void> {
     try {
-     const data = {
+      const data = {
         ...req.body,
         year: Number(req.body.year),
         pages: Number(req.body.pages),
@@ -108,7 +107,7 @@ export class BookController {
         throw new Error(validationResult.error.issues[0].message);
       }
 
-      const updateData = {
+      const updateData: IUpdateBook = {
         ...validationResult.data,
       };
 
@@ -128,23 +127,52 @@ export class BookController {
     }
   }
 
-  async deleteBook(req:Request,res:Response,next:NextFunction):Promise<void>{
+  async deleteBook(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const {bookId} = req.params;
+      const { bookId } = req.params;
       await this._deleteBookService.execute(bookId.toString());
-      res.status(204).json({message:"Book deleted successfully"})
+      res.status(204).json({ message: "Book deleted successfully" });
     } catch (error) {
       next(error);
     }
   }
 
-  async getBookDetail(req:Request,res:Response,next:NextFunction):Promise<void>{
+  async getBookDetail(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
-      const {bookId} = req.params;
-      const response = await this._getBookDetailService.execute(bookId.toString());
-      res.status(200).json({data:response,message:"Fetched book full details"})
+      const { bookId } = req.params;
+      const response = await this._getBookDetailService.execute(
+        bookId.toString(),
+      );
+      res
+        .status(200)
+        .json({ data: response, message: "Fetched book full details" });
     } catch (error) {
-      next(error)
+      next(error);
+    }
+  }
+
+  async getSuggestion(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { search } = req.query;
+      const value = search?.toString().trim() || "";
+      const data = await this._suggestionsService.execute(value);
+      res
+        .status(200)
+        .json({ data, res, message: "Fetched book suggestions fuccessfully" });
+    } catch (error) {
+      next(error);
     }
   }
 }

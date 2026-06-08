@@ -15,7 +15,7 @@ export const bookFormSchema = z.object({
     .number({ message: "Year must be a number" })
     .int("Year must be an integer")
     .min(1000, "Year must be 1000 or later")
-    .max(new Date().getFullYear() + 1, "Year cannot be in the far future"),
+    .max(new Date().getFullYear(),  "Year cannot be greater than the current year"),
   isbn: z
     .string()
     .min(1, "ISBN is required")

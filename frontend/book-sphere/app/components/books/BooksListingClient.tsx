@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useBooks } from "../../hooks/bookHook";
 import BookCard from "../home/BookCard";
 import AddBookModal from "../modals/AddBookModal";
 import { IBookDetails } from "../../shared/types/bookTypes";
+import { useSuggestions } from "../../hooks/bookHook";
 import {
   Search,
   Plus,
@@ -22,12 +23,13 @@ export default function BooksListingClient() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedLanguage, setSelectedLanguage] = useState("All");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedAvailability, setSelectedAvailability] = useState("All");
   const [sortBy, setSortBy] = useState("title-asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const itemsPerPage = 9;
+  const itemsPerPage = 12;
+
+  const { data: suggestions = [] } = useSuggestions(searchInput);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -38,7 +40,18 @@ export default function BooksListingClient() {
     return () => clearTimeout(handler);
   }, [searchInput]);
 
-  // Sync API parameters
+  useEffect(() => {
+    const handleClick = () => {
+      setShowSuggestions(false);
+    };
+
+    document.addEventListener("click", handleClick);
+
+    return () => {
+      document.removeEventListener("click", handleClick);
+    };
+  }, []);
+
   const apiQuery = {
     page: currentPage,
     limit: itemsPerPage,
@@ -53,7 +66,6 @@ export default function BooksListingClient() {
   const totalPages = data?.totalPages || 1;
   const totalBooks = data?.totalBooks || 0;
 
-  // ✅ FIX: previously missing variable
   const processedBooks: IBookDetails[] = booksList;
 
   const handlePageChange = (page: number) => {
@@ -66,8 +78,6 @@ export default function BooksListingClient() {
   const handleResetFilters = () => {
     setSearchInput("");
     setSelectedLanguage("All");
-    setSelectedCategory("All");
-    setSelectedAvailability("All");
     setSortBy("title-asc");
     setCurrentPage(1);
   };
@@ -98,14 +108,41 @@ export default function BooksListingClient() {
       <div className="bg-gray-50/50 border border-gray-100 p-4 sm:p-5 rounded-3xl">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="relative lg:w-[70%]">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+
             <input
               type="text"
               placeholder="Search books, author, ISBN..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
+
+            {showSuggestions &&
+              searchInput.trim() &&
+              suggestions.length > 0 && (
+                <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden">
+                  {suggestions.map((item: string, index: number) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => {
+                        setSearchInput(item);
+                        setDebouncedSearch(item);
+                        setShowSuggestions(false);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition border-b border-gray-100 last:border-b-0"
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:w-[30%]">

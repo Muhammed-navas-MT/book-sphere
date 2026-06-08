@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import {
   createBook,
@@ -12,12 +8,10 @@ import {
   getBookById,
   updateBook,
   deleteBook,
+  suggestion,
 } from "../services/bookService";
 
-import {
-  IListBooksQuery,
-  IUpdateBook,
-} from "../shared/types/bookTypes";
+import { IListBooksQuery, IUpdateBook } from "../shared/types/bookTypes";
 
 const BOOK_QUERY_KEYS = {
   ALL: ["books"] as const,
@@ -88,5 +82,13 @@ export const useDeleteBook = () => {
         queryKey: BOOK_QUERY_KEYS.ALL,
       });
     },
+  });
+};
+
+export const useSuggestions = (search: string) => {
+  return useQuery({
+    queryKey: ["book-suggestions", search],
+    queryFn: () => suggestion(search),
+    enabled: search.trim().length > 0,
   });
 };

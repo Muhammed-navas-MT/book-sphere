@@ -49,5 +49,11 @@ export class BookRoutes {
         injectedBookController.getBookDetail(req, res, next);
       },
     );
+     this.router.get(
+      Routes.BOOK.SUGGESTION,
+      (req: Request, res: Response, next: NextFunction) => {
+        injectedBookController.getSuggestion(req, res, next);
+      },
+    );
   }
 }

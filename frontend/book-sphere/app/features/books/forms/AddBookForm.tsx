@@ -2,11 +2,15 @@
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
+
 import { useCreateBook } from "../../../hooks/bookHook";
 import { bookFormSchema, BookFormValues } from "../schemas/book.schema";
+
 import ImageUpload from "../../../components/shared/ImageUpload";
-import { Loader2 } from "lucide-react";
 import BookCreatingLoader from "@/app/components/modals/BookCreatingLoader";
+import { useState } from "react";
+import { ApiError } from "@/app/shared/types/apiError";
 
 interface AddBookFormProps {
   onSuccess?: () => void;
@@ -14,12 +18,14 @@ interface AddBookFormProps {
 }
 
 export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
+  const [serverMessage, setServerMessage] = useState("");
   const { mutateAsync, isPending } = useCreateBook();
 
   const {
     register,
     handleSubmit,
     control,
+    setError,
     formState: { errors },
   } = useForm<BookFormValues>({
     resolver: zodResolver(bookFormSchema),
@@ -36,6 +42,21 @@ export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
     },
   });
 
+  const inputClass = `
+    w-full
+    rounded-xl
+    border
+    border-gray-300
+    px-4
+    py-3
+    text-sm
+    outline-none
+    transition
+    focus:ring-2
+    focus:ring-purple-500
+    focus:border-purple-500
+  `;
+
   const onSubmit = async (data: BookFormValues) => {
     try {
       const formData = new FormData();
@@ -49,159 +70,212 @@ export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
       formData.append("language", data.language);
       formData.append("pages", String(data.pages));
 
-      formData.append("coverImage", data.coverImage as File);
+      if (data.coverImage) {
+        formData.append("coverImage", data.coverImage as File);
+      }
 
       await mutateAsync(formData);
 
       onSuccess?.();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      const err = error as ApiError;
+
+      setServerMessage(err.message);
+
+      if (err.errors) {
+        Object.entries(err.errors).forEach(([field, message]) => {
+          setError(field as keyof BookFormValues, {
+            type: "server",
+            message,
+          });
+        });
+      }
     }
   };
 
   return (
     <>
       {isPending && <BookCreatingLoader />}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
+      {serverMessage && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          {serverMessage}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Title */}
         <div>
+          <label className="mb-2 block text-sm font-medium">Book Title</label>
+
           <input
-            placeholder="Book Title"
             {...register("title")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.title ? "border-red-500" : "border-gray-200"
-            }`}
+            placeholder="Enter book title"
+            className={inputClass}
           />
+
           {errors.title && (
-            <p className="text-xs text-red-600">{errors.title.message}</p>
+            <p className="mt-1 text-xs text-red-500">{errors.title.message}</p>
           )}
         </div>
 
-        {/* Author */}
+        {/* Author + Publisher */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Author</label>
+
+            <input
+              {...register("author")}
+              placeholder="Author name"
+              className={inputClass}
+            />
+
+            {errors.author && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.author.message}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Publisher</label>
+
+            <input
+              {...register("publisher")}
+              placeholder="Publisher"
+              className={inputClass}
+            />
+
+            {errors.publisher && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.publisher.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Year + Pages */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium">Year</label>
+
+            <input
+              type="number"
+              {...register("year", {
+                valueAsNumber: true,
+              })}
+              className={inputClass}
+            />
+
+            {errors.year && (
+              <p className="mt-1 text-xs text-red-500">{errors.year.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Pages</label>
+
+            <input
+              type="number"
+              {...register("pages", {
+                valueAsNumber: true,
+              })}
+              className={inputClass}
+            />
+
+            {errors.pages && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.pages.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* ISBN + Language */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="mb-2 block text-sm font-medium">ISBN</label>
+
+            <input
+              {...register("isbn")}
+              placeholder="ISBN Number"
+              className={inputClass}
+            />
+
+            {errors.isbn && (
+              <p className="mt-1 text-xs text-red-500">{errors.isbn.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">Language</label>
+
+            <input
+              {...register("language")}
+              placeholder="Language"
+              className={inputClass}
+            />
+
+            {errors.language && (
+              <p className="mt-1 text-xs text-red-500">
+                {errors.language.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Image */}
         <div>
-          <input
-            placeholder="Author"
-            {...register("author")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.author ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.author && (
-            <p className="text-xs text-red-600">{errors.author.message}</p>
-          )}
-        </div>
+          <label className="mb-2 block text-sm font-medium">Cover Image</label>
 
-        {/* Publisher */}
-        <div>
-          <input
-            placeholder="Publisher"
-            {...register("publisher")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.publisher ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.publisher && (
-            <p className="text-xs text-red-600">{errors.publisher.message}</p>
-          )}
-        </div>
-
-        {/* Year */}
-        <div>
-          <input
-            type="number"
-            placeholder="Year"
-            {...register("year", { valueAsNumber: true })}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.year ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.year && (
-            <p className="text-xs text-red-600">{errors.year.message}</p>
-          )}
-        </div>
-
-        {/* Pages */}
-        <div>
-          <input
-            type="number"
-            placeholder="Pages"
-            {...register("pages", { valueAsNumber: true })}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.pages ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.pages && (
-            <p className="text-xs text-red-600">{errors.pages.message}</p>
-          )}
-        </div>
-
-        {/* ISBN */}
-        <div>
-          <input
-            placeholder="ISBN"
-            {...register("isbn")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.isbn ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.isbn && (
-            <p className="text-xs text-red-600">{errors.isbn.message}</p>
-          )}
-        </div>
-
-        {/* Language */}
-        <div>
-          <input
-            placeholder="Language"
-            {...register("language")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.language ? "border-red-500" : "border-gray-200"
-            }`}
-          />
-          {errors.language && (
-            <p className="text-xs text-red-600">{errors.language.message}</p>
-          )}
-        </div>
-
-        {/* Cover Image */}
-        <Controller
-          name="coverImage"
-          control={control}
-          render={({ field }) => (
-            <div>
+          <Controller
+            name="coverImage"
+            control={control}
+            render={({ field }) => (
               <ImageUpload value={field.value} onChange={field.onChange} />
-              {errors.coverImage && (
-                <p className="text-xs text-red-600">
-                  {errors.coverImage.message as string}
-                </p>
-              )}
-            </div>
+            )}
+          />
+
+          {errors.coverImage && (
+            <p className="mt-1 text-xs text-red-500">
+              {errors.coverImage.message as string}
+            </p>
           )}
-        />
+        </div>
 
         {/* Description */}
         <div>
+          <label className="mb-2 block text-sm font-medium">Description</label>
+
           <textarea
-            placeholder="Description"
+            rows={5}
             {...register("description")}
-            className={`w-full px-4 py-3 border rounded-xl ${
-              errors.description ? "border-red-500" : "border-gray-200"
-            }`}
+            placeholder="Book description..."
+            className={`${inputClass} resize-none`}
           />
+
           {errors.description && (
-            <p className="text-xs text-red-600">{errors.description.message}</p>
+            <p className="mt-1 text-xs text-red-500">
+              {errors.description.message}
+            </p>
           )}
         </div>
 
         {/* Buttons */}
-        <div className="flex justify-end gap-3">
-          {onCancel && (
-            <button type="button" onClick={onCancel}>
-              Cancel
-            </button>
-          )}
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 transition"
+          >
+            Cancel
+          </button>
 
-          <button type="submit" disabled={isPending}>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-auto px-6 py-3 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2 transition"
+          >
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />

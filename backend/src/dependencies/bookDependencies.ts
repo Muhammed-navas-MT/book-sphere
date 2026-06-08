@@ -4,6 +4,7 @@ import { CreateBookService } from "../services/bookService/createBookService.js"
 import { DeleteBookService } from "../services/bookService/deleteBookService.js";
 import { GetBookDetailService } from "../services/bookService/getBookDetailService.js";
 import { ListBookService } from "../services/bookService/listBooksService.js";
+import { SuggestionService } from "../services/bookService/suggestionService.js";
 import { UpdateBookService } from "../services/bookService/updateBookService.js";
 import { BookElasticService } from "../services/elasticsearch/bookElasticService.js";
 
@@ -20,10 +21,12 @@ const updateBookService = new UpdateBookService(
 );
 const deleteBookService = new DeleteBookService(bookRepository,bookElasticService);
 const getDetailService = new GetBookDetailService(bookRepository);
+const suggestionsService = new SuggestionService(bookElasticService);
 export const injectedBookController = new BookController(
   createBookService,
   listBooksService,
   updateBookService,
   deleteBookService,
   getDetailService,
+  suggestionsService,
 );

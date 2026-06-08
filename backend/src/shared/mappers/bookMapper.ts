@@ -7,6 +7,7 @@ export class BookMapper {
       return {
         _id: book._id.toString(),
         author: book.author,
+        publisher: book.publisher,
         coverImage: book.coverImage,
         createdAt: book.createdAt,
         description: book.description,
@@ -23,6 +24,7 @@ export class BookMapper {
     return {
       _id: book._id.toString(),
       author: book.author,
+      publisher: book.publisher,
       coverImage: book.coverImage,
       createdAt: book.createdAt,
       description: book.description,

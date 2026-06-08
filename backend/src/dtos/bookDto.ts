@@ -1,6 +1,7 @@
 export interface IBookCreate {
   title: string;
   author: string;
+  publisher: string;
   year: number;
   isbn: string;
   description: string;
@@ -25,6 +26,7 @@ export interface IBookDetails {
   _id: string;
   title: string;
   author: string;
+  publisher: string;
   year: number;
   isbn: string;
   description: string;

@@ -39,4 +39,20 @@ export class BookElasticService implements IBookElasticService {
       id: bookId,
     });
   }
+  async getSuggestions(search: string): Promise<string[]> {
+    const result = await elasticClient.search({
+      index: "books",
+      size: 10,
+      query: {
+        match_phrase_prefix: {
+          title: search,
+        },
+      },
+      _source: ["title"],
+    });
+
+    return result.hits.hits.map(
+      (hit) => (hit._source as { title: string }).title,
+    );
+  }
 }

@@ -85,7 +85,7 @@ export default function Navbar() {
               href="/books"
               className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-md shadow-purple-100 hover:shadow-purple-200 hover:-translate-y-0.5 active:translate-y-0 transition duration-200"
             >
-              Browse Shop
+              Explore All Books
             </Link>
           </div>
 

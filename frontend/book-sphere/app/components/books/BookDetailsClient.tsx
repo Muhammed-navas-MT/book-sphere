@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
+import { ApiError } from "@/app/shared/types/apiError";
 
 interface BookDetailsClientProps {
   book: IBookDetails;
@@ -24,6 +25,7 @@ interface BookDetailsClientProps {
 
 export default function BookDetailsClient({ book }: BookDetailsClientProps) {
   const router = useRouter();
+  const [deleteError, setDeleteError] = useState("");
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const { mutateAsync: deleteBookMutate, isPending: isDeleting } =
@@ -31,11 +33,16 @@ export default function BookDetailsClient({ book }: BookDetailsClientProps) {
 
   const handleDelete = async () => {
     try {
+      setDeleteError("");
+
       await deleteBookMutate(book._id);
+
       setIsDeleteConfirmOpen(false);
       router.push("/books");
-    } catch (err) {
-      console.error("Failed to delete book:", err);
+    } catch (error) {
+      const err = error as ApiError;
+
+      setDeleteError(err.message || "Failed to delete book");
     }
   };
 
@@ -222,6 +229,12 @@ export default function BookDetailsClient({ book }: BookDetailsClientProps) {
                 ? This action is permanent and cannot be undone.
               </p>
             </div>
+
+            {deleteError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {deleteError}
+              </div>
+            )}
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
