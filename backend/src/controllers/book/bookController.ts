@@ -170,7 +170,7 @@ export class BookController {
       const data = await this._suggestionsService.execute(value);
       res
         .status(200)
-        .json({ data, res, message: "Fetched book suggestions fuccessfully" });
+        .json({ data, message: "Fetched book suggestions fuccessfully" });
     } catch (error) {
       next(error);
     }

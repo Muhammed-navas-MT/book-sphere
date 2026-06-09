@@ -11,6 +11,7 @@ import ImageUpload from "../../../components/shared/ImageUpload";
 import BookCreatingLoader from "@/app/components/modals/BookCreatingLoader";
 import { useState } from "react";
 import { ApiError } from "@/app/shared/types/apiError";
+import toast from "react-hot-toast";
 
 interface AddBookFormProps {
   onSuccess?: () => void;
@@ -18,7 +19,6 @@ interface AddBookFormProps {
 }
 
 export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
-  const [serverMessage, setServerMessage] = useState("");
   const { mutateAsync, isPending } = useCreateBook();
 
   const {
@@ -75,12 +75,12 @@ export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
       }
 
       await mutateAsync(formData);
-
+      toast.success("Book added successfully 🎉");
       onSuccess?.();
     } catch (error) {
       const err = error as ApiError;
 
-      setServerMessage(err.message);
+      toast.error(err.message || "Something went wrong");
 
       if (err.errors) {
         Object.entries(err.errors).forEach(([field, message]) => {
@@ -97,14 +97,7 @@ export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
     <>
       {isPending && <BookCreatingLoader />}
 
-      {serverMessage && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-          {serverMessage}
-        </div>
-      )}
-
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        {/* Title */}
         <div>
           <label className="mb-2 block text-sm font-medium">Book Title</label>
 
@@ -119,7 +112,6 @@ export default function AddBookForm({ onSuccess, onCancel }: AddBookFormProps) {
           )}
         </div>
 
-        {/* Author + Publisher */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className="mb-2 block text-sm font-medium">Author</label>
