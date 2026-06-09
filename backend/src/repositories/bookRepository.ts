@@ -4,8 +4,16 @@ import type { IBookRepository } from "../interface/repository/bookRepositoryInte
 
 export class BookRepository implements IBookRepository {
   async create(data: IBookCreate): Promise<IBook> {
-    const book = await Book.create(data);
-    return book;
+    try {
+      const book = await Book.create(data);
+      return book.toObject();
+    } catch (error: any) {
+      if (error.code === 11000 && error.keyPattern?.isbn) {
+        throw new Error("This ISBN is already linked to another book in the system.");
+      }
+
+      throw error;
+    }
   }
 
   async findById(id: string): Promise<IBook | null> {

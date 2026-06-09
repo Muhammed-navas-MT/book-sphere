@@ -12,6 +12,7 @@ export class SuggestionService implements ISuggestionService {
     const suggestions = await this._bookElasticService.getSuggestions(
       search.trim(),
     );
+    console.log(suggestions);
 
     return [...new Set(suggestions)];
   }

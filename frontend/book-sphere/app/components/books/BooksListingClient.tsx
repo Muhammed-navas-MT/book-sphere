@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useBooks } from "../../hooks/bookHook";
 import BookCard from "../home/BookCard";
 import AddBookModal from "../modals/AddBookModal";
@@ -26,31 +26,39 @@ export default function BooksListingClient() {
   const [sortBy, setSortBy] = useState("title-asc");
   const [currentPage, setCurrentPage] = useState(1);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionRef = useRef<HTMLDivElement>(null);
 
   const itemsPerPage = 12;
 
-  const { data: suggestions = [] } = useSuggestions(searchInput);
+  const { data: suggestionsData, isLoading: isSuggestionLoading } =
+    useSuggestions(searchInput);
+
+  const suggestions: string[] = suggestionsData ?? [];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionRef.current &&
+        !suggestionRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchInput);
-      setCurrentPage(1);
     }, 400);
 
     return () => clearTimeout(handler);
   }, [searchInput]);
-
-  useEffect(() => {
-    const handleClick = () => {
-      setShowSuggestions(false);
-    };
-
-    document.addEventListener("click", handleClick);
-
-    return () => {
-      document.removeEventListener("click", handleClick);
-    };
-  }, []);
 
   const apiQuery = {
     page: currentPage,
@@ -107,7 +115,7 @@ export default function BooksListingClient() {
       {/* Search + Filters */}
       <div className="bg-gray-50/50 border border-gray-100 p-4 sm:p-5 rounded-3xl">
         <div className="flex flex-col lg:flex-row gap-4">
-          <div className="relative lg:w-[70%]">
+          <div ref={suggestionRef} className="relative lg:w-[70%]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
 
             <input
@@ -117,28 +125,36 @@ export default function BooksListingClient() {
               onChange={(e) => {
                 setSearchInput(e.target.value);
                 setShowSuggestions(true);
+                setCurrentPage(1);
               }}
               onFocus={() => setShowSuggestions(true)}
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600"
             />
 
+            {isSuggestionLoading && searchInput.trim() && (
+              <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-2xl p-3 shadow-lg z-50">
+                Searching...
+              </div>
+            )}
+
             {showSuggestions &&
               searchInput.trim() &&
               suggestions.length > 0 && (
-                <div className="absolute top-full mt-2 w-full bg-white border border-gray-200 rounded-2xl shadow-lg z-50 overflow-hidden">
-                  {suggestions.map((item: string, index: number) => (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden z-50">
+                  {suggestions.map((item, index) => (
                     <button
                       key={index}
                       type="button"
                       onClick={() => {
                         setSearchInput(item);
                         setDebouncedSearch(item);
-                        setShowSuggestions(false);
                         setCurrentPage(1);
+                        setShowSuggestions(false);
                       }}
-                      className="w-full text-left px-4 py-3 hover:bg-purple-50 transition border-b border-gray-100 last:border-b-0"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-purple-50 transition border-b border-gray-100 last:border-b-0"
                     >
-                      {item}
+                      <Search className="w-4 h-4 text-gray-400" />
+                      <span>{item}</span>
                     </button>
                   ))}
                 </div>

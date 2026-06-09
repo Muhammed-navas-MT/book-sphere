@@ -78,12 +78,7 @@ export const deleteBook = async (bookId: string) => {
 export const suggestion = async (search: string): Promise<string[]> => {
   try {
     const response = await api.get(
-      `${Routes.BOOK.BASE}${Routes.BOOK.SUGGESTION}`,
-      {
-        params: {
-          search,
-        },
-      },
+      `${Routes.BOOK.BASE}${Routes.BOOK.SUGGESTION}?search=${search}`,
     );
 
     return response.data.data;
